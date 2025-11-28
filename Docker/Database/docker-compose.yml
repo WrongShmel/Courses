@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sqle_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ${DATA_DIR}/postgres_data:/var/lib/postgresql/data
+      - ${DATA_DIR}/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:24.2.3
+    container_name: sqle_cloudbeaver
+    ports:
+      - "${DBEAVER_PORT}:8978"
+    volumes:
+      - ${DATA_DIR}/cloudbeaver_workspace:/opt/cloudbeaver/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
