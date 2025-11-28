@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  pyspark-jupyter:
+    build: .
+    ports:
+      - "8811:8888"  # Jupyter Notebook
+      - "4040-4050:4040-4050"  # Диапазон портов для Spark UI
+    volumes:
+      - my_jupyter_volume:/home/jovyan/work
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./data:/home/jovyan/work/data
+    restart: unless-stopped
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_MASTER_WEBUI_PORT=4040
+      - SPARK_DRIVER_BIND_ADDRESS=0.0.0.0
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    networks:
+      - spark-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  spark-network:
+    driver: bridge
+
+volumes:
+  my_jupyter_volume:

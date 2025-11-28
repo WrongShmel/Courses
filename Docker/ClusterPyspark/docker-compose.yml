@@ -1,0 +1,118 @@
+services:
+  spark-master:
+    build:
+      context: .
+      target: spark-master
+    container_name: spark-master
+    hostname: spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_LOCAL_IP=0.0.0.0
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_WEBUI_ADDRESS=0.0.0.0
+    volumes:
+      - ./build/workspace:/opt/workspace
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  spark-worker-1:
+    build:
+      context: .
+      target: spark-worker
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_LOCAL_IP=127.0.0.1
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./build/workspace:/opt/workspace
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  spark-worker-2:
+    build:
+      context: .
+      target: spark-worker
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_LOCAL_IP=127.0.0.1
+    ports:
+      - "8082:8081"
+    volumes:
+      - ./build/workspace:/opt/workspace
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  spark-worker-3:
+    build:
+      context: .
+      target: spark-worker
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_LOCAL_IP=127.0.0.1
+    ports:
+      - "8083:8081"
+    volumes:
+      - ./build/workspace:/opt/workspace
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  spark-worker-4:
+    build:
+      context: .
+      target: spark-worker
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_LOCAL_IP=127.0.0.1
+    ports:
+      - "8084:8081"
+    volumes:
+      - ./build/workspace:/opt/workspace
+    depends_on:
+      spark-master:
+        condition: service_healthy
+
+  jupyterlab:
+    build:
+      context: .
+      target: jupyterlab
+    container_name: jupyterlab
+    ports:
+      - "8888:8888"
+      - "4041:4040"
+    volumes:
+      - ./build/workspace:/opt/workspace
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    command: >
+      jupyter lab
+      --ip=0.0.0.0
+      --port=8888
+      --no-browser
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+      --NotebookApp.allow_origin='*'
+    depends_on:
+      - spark-master
